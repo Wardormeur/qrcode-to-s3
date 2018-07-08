@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.cdf.qrCodeToS3";
+option java_outer_classname = "qrCodeToS3";
+option objc_class_prefix = "QRC";
+
+package toS3;
+
+service QrCoder {
+  rpc toS3 (Order) returns (QrCodeUrl) {}
+}
+
+message Order {
+  string order = 1;
+  string event = 2;
+}
+
+message QrCodeUrl {
+  string url = 1;
+}

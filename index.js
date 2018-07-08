@@ -1,27 +1,40 @@
-const messages = require('./icsToS3_pb');
-const services = require('./icsToS3_grpc_pb');
-const ics = require('ics');
-
+const messages = require('./qrcodeToS3_pb');
+const services = require('./qrcodeToS3_grpc_pb');
+// https://github.com/netoxygen/node-qrcodeine#readme seems more interesting, but require a dockerfile
+const qr = require('qr-image');
+const pkgcloud = require('pkgcloud');
+const client = pkgcloud.storage.createClient({
+  provider: 'amazon',
+  protocol: 'http://',
+  serversUrl: 's3:80',
+  accessKeyId: 'remote-identity',
+  accessKey: 'remote-credential',
+  forcePathBucket: true,
+});
 const grpc = require('grpc');
+const hostname = process.env.ZEN_HOSTNAME;
 
-function eventToIcs(call, callback) {
-  const _event = call.request.toObject();
-  _event.start = _event.startList;
-  _event.end = _event.endList;
-  delete _event.startList;
-  delete _event.endList;
-  console.log(_event);
-  ics.createEvent(_event, (err, ics) => {
-    console.log(err, ics);
-    if (err) return callback(grpc.status.UNKNOWN);
-    const reply = new messages.IcsUrl([ics]);
+function orderToQrCode(call, callback) {
+  const { order, event } = call.request.toObject();
+  const url = `${hostname}/dashboard/events/${event}/orders/${order}/checkin`;
+  const imgBuffer = qr.image(url, { type: 'png' });
+  const writeStream = client.upload({
+    container: 'zenbookingqrcode',
+    remote: `${order}.png`, 
+  });
+  writeStream.on('error', (err) => {
+    return callback(grpc.status.UNKNOWN);
+  });
+  writeStream.on('success', (file) => {
+    const reply = new messages.QrCodeUrl([file.location]);
     callback(null, reply);
   });
+  imgBuffer.pipe(writeStream);
 }
 
 function main() {
   const server = new grpc.Server();
-  server.addService(services.ICSService, {toS3: eventToIcs});
+  server.addService(services.QrCoderService, { toS3: orderToQrCode });
   server.bind('0.0.0.0:50051', grpc.ServerCredentials.createInsecure());
   server.start();
 }

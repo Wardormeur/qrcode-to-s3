@@ -1,16 +1,16 @@
 {
   "name": "ics-generator",
   "version": "1.0.0",
-  "description": "Create an ICS from a Zen event and save it to S3",
+  "description": "Create a qrcode of an order to save/delete to s3",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon -e proto,js --watch index.js protos --exec 'yarn compile && yarn start'",
-    "compile": "./node_modules/grpc-tools/bin/protoc.js --js_out=import_style=commonjs,binary:./ --grpc_out=./ -I ./protos/ ./protos/icsToS3.proto"
+    "dev": "nodemon -e proto,js --watch {index.js,protos} --exec 'yarn compile && yarn start'",
+    "compile": "./node_modules/grpc-tools/bin/protoc.js --js_out=import_style=commonjs,binary:./ --grpc_out=./ -I ./protos/ ./protos/qrcodeToS3.proto"
   },
   "keywords": [
-    "ics",
-    "ics-to-s3",
+    "qrcode",
+    "qrcode-to-s3",
     "coderdojo"
   ],
   "author": "Wardormeur",
@@ -18,7 +18,8 @@
   "dependencies": {
     "google-protobuf": "^3.5.0",
     "grpc": "^1.12.2",
-    "ics": "^2.6.0"
+    "pkgcloud": "^1.5.0",
+    "qr-image": "^3.2.0"
   },
   "devDependencies": {
     "grpc-tools": "^1.6.6",
